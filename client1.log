@@ -1,0 +1,6 @@
+2022-11-30 21:20:28,418 - [CONNECTING] Connecting...
+2022-11-30 21:20:28,419 - [RECEIVING ID] receiving ID 35180 from server
+2022-11-30 21:20:28,420 - [SENDING] Sending message Hello World! to server
+2022-11-30 21:20:30,422 - [SENDING] Sending message READY! to server
+2022-11-30 21:20:30,423 - [RECEIVING SERVER_STATE] receiving SERVER_STATE INIT_GLOBAL_WEIGHTS from server
+2022-11-30 21:20:30,423 - [SENDING] Sending message !DISCONNECT to server
