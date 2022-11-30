@@ -1,4 +1,4 @@
-from __init__ import HEADER, PORT, FORMAT, DISCONNECT_MESSAGE, IP_ADDR, SERVER_STATE, NUMBER_OF_CLIENTS
+from __init__ import HEADER, PORT, FORMAT, DISCONNECT_MESSAGE, IP_ADDR, SERVER_STATE, NUMBER_OF_CLIENTS, CYCLES
 import socket
 import threading
 import logging
@@ -15,7 +15,7 @@ class Server:
         self.curr_n_clients = 0
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
+        self.cycle = 0
         try:
             self.server.bind((self.addr, self.port))
 
@@ -43,6 +43,9 @@ class Server:
 
 
 def handle_client(conn, addr):
+    def send_msg(c, state):
+        logging.info(f'[SENDING SERVER_STATE] Sending SERVER_STATE {state} to client')
+        c.send(state.encode(FORMAT))
 
     def send_id_client(c, a):
         Id = str(a[1])
@@ -54,7 +57,6 @@ def handle_client(conn, addr):
         c.send(state.encode(FORMAT))
 
     def receive_msg(c, a):
-        c.settimeout(1.0)
         try:
             msg_length = c.recv(HEADER).decode(FORMAT)
             if msg_length:
@@ -64,24 +66,43 @@ def handle_client(conn, addr):
                 return msg
         except Exception as e:
             logging.critical(f'[TIMEOUT ERROR] {e}')
+
     send_id_client(conn, addr)
     connected = True
-    _ = receive_msg(conn, addr)
+    message = receive_msg(conn, addr)
     if connected:
         logging.info(f"[NEW CONNECTION]\t {addr} connected!")
     else:
         logging.info(f"[CONNECTION ERROR]\t {addr} NOT connected!")
     while connected:
-        message = receive_msg(conn, addr)
         if message == DISCONNECT_MESSAGE:
             logging.info(f'[DISCONNECTING] Client {addr} is disconnecting...')
             break
+        if message == 'Hello World!':
+            send_state(conn, SERVER_STATE.INIT_GLOBAL_WEIGHTS)
         if message == 'READY!':
             logging.info(f'[CLIENT STATE] Client {addr} state is READY!')
-            send_state(conn, SERVER_STATE.INIT_GLOBAL_WEIGHTS)
+        if message == 'Waiting for weights!':
+            if server.cycle:
+                print(server.cycle)
+                send_msg(conn, 'Global Weights')
+            else:
+                print('Init weights')
+                send_msg(conn, 'Global Weights')
+        if message == 'Local Weights':
+            # Do some averaging
+            # message = receive_msg(conn, addr)
+            if server.cycle != CYCLES:
+                send_msg(conn, 'Global Weights')
+                server.cycle += 1
+            else:
+                send_msg(conn, DISCONNECT_MESSAGE)
+                break
         if message == '':
             logging.info(f'[SYSTEM ERROR] Exiting...')
             sys.exit()
+        message = receive_msg(conn, addr)
+
     conn.close()
 
 
@@ -92,6 +113,7 @@ def cleanse():
 
 
 def main():
+    global server
     server = Server(IP_ADDR, PORT)
     server.listening()
     connections = []

@@ -1,6 +1,14 @@
-2022-11-30 21:20:28,418 - [CONNECTING] Connecting...
-2022-11-30 21:20:28,419 - [RECEIVING ID] receiving ID 35180 from server
-2022-11-30 21:20:28,420 - [SENDING] Sending message Hello World! to server
-2022-11-30 21:20:30,422 - [SENDING] Sending message READY! to server
-2022-11-30 21:20:30,423 - [RECEIVING SERVER_STATE] receiving SERVER_STATE INIT_GLOBAL_WEIGHTS from server
-2022-11-30 21:20:30,423 - [SENDING] Sending message !DISCONNECT to server
+2022-11-30 22:18:48,184 - [CONNECTING] Connecting...
+2022-11-30 22:18:48,186 - [RECEIVING ID] receiving ID 50668 from server
+2022-11-30 22:18:48,186 - [SENDING] Sending message Hello World! to server
+2022-11-30 22:18:48,186 - [RECEIVING MESSAGE] receiving message INIT_GLOBAL_WEIGHTS from server
+2022-11-30 22:18:48,186 - [SENDING] Sending message Waiting for weights! to server
+2022-11-30 22:18:48,230 - [RECEIVING MESSAGE] receiving message Global Weights from server
+2022-11-30 22:18:48,230 - [SENDING] Sending message Local Weights to server
+2022-11-30 22:18:48,274 - [RECEIVING MESSAGE] receiving message Global Weights from server
+2022-11-30 22:18:48,274 - [SENDING] Sending message Local Weights to server
+2022-11-30 22:18:48,318 - [RECEIVING MESSAGE] receiving message Global Weights from server
+2022-11-30 22:18:48,318 - [SENDING] Sending message Local Weights to server
+2022-11-30 22:18:48,362 - [RECEIVING MESSAGE] receiving message Global Weights from server
+2022-11-30 22:18:48,362 - [SENDING] Sending message Local Weights to server
+2022-11-30 22:18:48,406 - [RECEIVING MESSAGE] receiving message !DISCONNECT from server

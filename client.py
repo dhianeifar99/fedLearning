@@ -2,7 +2,6 @@ from __init__ import HEADER, PORT, FORMAT, IP_ADDR, DISCONNECT_MESSAGE
 from utils import find_client_index
 import socket
 import logging
-import time
 
 logging.basicConfig(level=logging.INFO, filename=f'client{find_client_index()}.log', filemode='w',
                     format='%(asctime)s - %(message)s')
@@ -34,6 +33,11 @@ class Client:
         logging.info(f'[RECEIVING ID] receiving ID {ID} from server')
         self.id = ID
 
+    def receive_message(self):
+        message = self.client_socket.recv(HEADER).decode(FORMAT)
+        logging.info(f'[RECEIVING MESSAGE] receiving message {message} from server')
+        return message
+
     def receive_server_state(self):
         msg = self.client_socket.recv(HEADER).decode(FORMAT)
         logging.info(f'[RECEIVING SERVER_STATE] receiving SERVER_STATE {msg} from server')
@@ -45,10 +49,19 @@ def main():
     client.connecting()
     client.receive_id()
     client.send_msg('Hello World!')
-    time.sleep(2.0)
-    client.send_msg('READY!')
-    client.receive_server_state()
-    client.send_msg(DISCONNECT_MESSAGE)
+    connected = True
+    while connected:
+        message = client.receive_message()
+        if message == 'INIT_GLOBAL_WEIGHTS':
+            client.send_msg('Waiting for weights!')
+        if message == 'Global Weights':
+            # Training
+            # Send weights
+            client.send_msg('Local Weights')
+        if message == DISCONNECT_MESSAGE:
+            break
+    # client.send_msg('READY!')
+    # client.send_msg(DISCONNECT_MESSAGE)
 
 
 if __name__ == '__main__':
