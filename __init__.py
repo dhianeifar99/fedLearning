@@ -1,9 +1,24 @@
+import os
+
+
+def log_cleansing_server():
+    for file in os.listdir():
+        if file[0] == 's' and file[-1] == 'g':
+            os.remove(file)
+
+
+def log_cleansing_client():
+    for file in os.listdir():
+        if file[0] == 'c' and file[-1] == 'g':
+            os.remove(file)
+
+
 HEADER_SEND = 10
 HEADER_RECV = 11
 PORT = 5050
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = '!DISCONNECT'
-IP_ADDR = '192.168.122.1'
+IP_ADDR = '192.168.173.194'
 NUMBER_OF_CLIENTS = 1
 CYCLES = 3
 FLAGS = {

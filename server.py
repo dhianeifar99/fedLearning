@@ -1,10 +1,10 @@
-from __init__ import HEADER_SEND, HEADER_RECV, PORT, FORMAT, INV_FLAGS,\
+from __init__ import log_cleansing_server, HEADER_SEND, HEADER_RECV, PORT, FORMAT, INV_FLAGS,\
     DISCONNECT_MESSAGE, IP_ADDR, NUMBER_OF_CLIENTS, CYCLES, FLAGS
 import socket
 import threading
 import logging
-import os
 import sys
+import pickle
 
 
 class Server:
@@ -46,25 +46,27 @@ class Server:
 def handle_client(conn, addr):
     def send_msg(c, _flag, _message):
         def message_formatting(_message):
-            msg_bytes = ''.join([FLAGS[_flag], f'{len(_message):<{HEADER_SEND}}', _message])
-            return bytes(msg_bytes, FORMAT)
+            pickled_message = pickle.dumps(_message)
+            msg_bytes = bytes(''.join([FLAGS[_flag], f'{len(pickled_message):<{HEADER_SEND}}']), FORMAT) + pickled_message
+            return msg_bytes
 
         _message = message_formatting(_message)
         logging.info(f'[SENDING {_flag}] Sending {_flag} to client')
         c.send(_message)
 
     def receive_msg(_conn):
-        full_message = ''
-        received_message = _conn.recv(HEADER_RECV).decode(FORMAT)
-        _flag = received_message[0]
-        message_length = int(received_message[1:])
+        full_message = b''
+        received_message = _conn.recv(HEADER_RECV)
+        HEADER = received_message.decode(FORMAT)
+        _flag = HEADER[0]
+        message_length = int(HEADER[1:])
         full_message += received_message
         while True:
-            received_message = _conn.recv(HEADER_RECV).decode(FORMAT)
+            received_message = _conn.recv(HEADER_RECV)
             full_message += received_message
             if len(full_message) - HEADER_RECV == message_length:
                 break
-        full_message = full_message[HEADER_RECV:]
+        full_message = pickle.loads(full_message[HEADER_RECV:])
         logging.info(f'[RECEIVING MESSAGE] {full_message}')
         return full_message, INV_FLAGS[_flag]
 
@@ -89,12 +91,6 @@ def handle_client(conn, addr):
     conn.close()
 
 
-def cleanse():
-    for file in os.listdir():
-        if file[-1] == 'g':
-            os.remove(file)
-
-
 def main():
     global server
     server = Server(IP_ADDR, PORT)
@@ -112,7 +108,7 @@ def main():
 
 
 if __name__ == '__main__':
-    cleanse()
+    log_cleansing_server()
     logging.basicConfig(level=logging.INFO, filename='server.log', filemode='w',
                         format='%(asctime)s - %(message)s')
     main()
