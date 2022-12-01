@@ -1,4 +1,5 @@
-from __init__ import HEADER, PORT, FORMAT, DISCONNECT_MESSAGE, IP_ADDR, SERVER_STATE, NUMBER_OF_CLIENTS, CYCLES
+from __init__ import HEADER_SEND, HEADER_RECV, PORT, FORMAT, INV_FLAGS,\
+    DISCONNECT_MESSAGE, IP_ADDR, NUMBER_OF_CLIENTS, CYCLES, FLAGS
 import socket
 import threading
 import logging
@@ -43,65 +44,47 @@ class Server:
 
 
 def handle_client(conn, addr):
-    def send_msg(c, state):
-        logging.info(f'[SENDING SERVER_STATE] Sending SERVER_STATE {state} to client')
-        c.send(state.encode(FORMAT))
+    def send_msg(c, _flag, _message):
+        def message_formatting(_message):
+            msg_bytes = ''.join([FLAGS[_flag], f'{len(_message):<{HEADER_SEND}}', _message])
+            return bytes(msg_bytes, FORMAT)
 
-    def send_id_client(c, a):
-        Id = str(a[1])
-        logging.info(f'[SENDING ID] Sending ID {Id} to client')
-        c.send(Id.encode(FORMAT))
+        _message = message_formatting(_message)
+        logging.info(f'[SENDING {_flag}] Sending {_flag} to client')
+        c.send(_message)
 
-    def send_state(c, state):
-        logging.info(f'[SENDING SERVER_STATE] Sending SERVER_STATE {state} to client')
-        c.send(state.encode(FORMAT))
+    def receive_msg(_conn):
+        full_message = ''
+        received_message = _conn.recv(HEADER_RECV).decode(FORMAT)
+        _flag = received_message[0]
+        message_length = int(received_message[1:])
+        full_message += received_message
+        while True:
+            received_message = _conn.recv(HEADER_RECV).decode(FORMAT)
+            full_message += received_message
+            if len(full_message) - HEADER_RECV == message_length:
+                break
+        full_message = full_message[HEADER_RECV:]
+        logging.info(f'[RECEIVING MESSAGE] {full_message}')
+        return full_message, INV_FLAGS[_flag]
 
-    def receive_msg(c, a):
-        try:
-            msg_length = c.recv(HEADER).decode(FORMAT)
-            if msg_length:
-                msg_length = int(msg_length)
-                msg = c.recv(msg_length).decode(FORMAT)
-                logging.info(f'[RECEIVING] Received message from {a}: {msg}')
-                return msg
-        except Exception as e:
-            logging.critical(f'[TIMEOUT ERROR] {e}')
-
-    send_id_client(conn, addr)
+    send_msg(conn, 'ID', str(addr[1]))
     connected = True
-    message = receive_msg(conn, addr)
-    if connected:
-        logging.info(f"[NEW CONNECTION]\t {addr} connected!")
-    else:
-        logging.info(f"[CONNECTION ERROR]\t {addr} NOT connected!")
+    message, flag = receive_msg(conn)
     while connected:
-        if message == DISCONNECT_MESSAGE:
-            logging.info(f'[DISCONNECTING] Client {addr} is disconnecting...')
-            break
-        if message == 'Hello World!':
-            send_state(conn, SERVER_STATE.INIT_GLOBAL_WEIGHTS)
-        if message == 'READY!':
-            logging.info(f'[CLIENT STATE] Client {addr} state is READY!')
-        if message == 'Waiting for weights!':
-            if server.cycle:
-                print(server.cycle)
-                send_msg(conn, 'Global Weights')
-            else:
-                print('Init weights')
-                send_msg(conn, 'Global Weights')
-        if message == 'Local Weights':
+        if flag == 'CONNECTED':
+            send_msg(conn, 'GLOBAL WEIGHTS', 'GLOBAL WEIGHTS')
+        if flag == 'LOCAL WEIGHTS':
+            logging.info(f'[LOCAL WEIGHTS]')
             # Do some averaging
             # message = receive_msg(conn, addr)
-            if server.cycle != CYCLES:
-                send_msg(conn, 'Global Weights')
+            if server.cycle < CYCLES - 1:
+                send_msg(conn, 'GLOBAL WEIGHTS', 'GLOBAL WEIGHTS')
                 server.cycle += 1
             else:
-                send_msg(conn, DISCONNECT_MESSAGE)
-                break
-        if message == '':
-            logging.info(f'[SYSTEM ERROR] Exiting...')
-            sys.exit()
-        message = receive_msg(conn, addr)
+                send_msg(conn, DISCONNECT_MESSAGE, DISCONNECT_MESSAGE)
+                sys.exit()
+        message, flag = receive_msg(conn)
 
     conn.close()
 

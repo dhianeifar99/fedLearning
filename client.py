@@ -1,4 +1,5 @@
-from __init__ import HEADER, PORT, FORMAT, IP_ADDR, DISCONNECT_MESSAGE
+from __init__ import HEADER_SEND, HEADER_RECV, INV_FLAGS,\
+    PORT, FORMAT, IP_ADDR, DISCONNECT_MESSAGE, FLAGS
 from utils import find_client_index
 import socket
 import logging
@@ -19,49 +20,45 @@ class Client:
         logging.info('[CONNECTING] Connecting...')
         self.client_socket.connect((self.addr, self.port))
 
-    def send_msg(self, msg):
-        logging.info(f'[SENDING] Sending message {msg} to server')
-        message = msg.encode(FORMAT)
-        msg_length = len(message)
-        send_length = str(msg_length).encode(FORMAT)
-        send_length += b' ' * (HEADER - len(send_length))
-        self.client_socket.send(send_length)
-        self.client_socket.send(message)
+    def send_msg(self, msg, flag):
+        def message_formatting(_message):
+            msg_bytes = ''.join([FLAGS[flag], f'{len(_message):<{HEADER_SEND}}', msg])
+            return bytes(msg_bytes, FORMAT)
 
-    def receive_id(self):
-        ID = self.client_socket.recv(HEADER).decode(FORMAT)
-        logging.info(f'[RECEIVING ID] receiving ID {ID} from server')
-        self.id = ID
+        _message = message_formatting(msg)
+        logging.info(f'[SENDING {flag}] Sending {flag} {msg} to client')
+        self.client_socket.send(_message)
 
-    def receive_message(self):
-        message = self.client_socket.recv(HEADER).decode(FORMAT)
-        logging.info(f'[RECEIVING MESSAGE] receiving message {message} from server')
-        return message
-
-    def receive_server_state(self):
-        msg = self.client_socket.recv(HEADER).decode(FORMAT)
-        logging.info(f'[RECEIVING SERVER_STATE] receiving SERVER_STATE {msg} from server')
-        self.server_state = msg
+    def receive_msg(self):
+        full_message = ''
+        received_message = self.client_socket.recv(HEADER_RECV).decode(FORMAT)
+        _flag = received_message[0]
+        message_length = int(received_message[1:])
+        full_message += received_message
+        while True:
+            received_message = self.client_socket.recv(HEADER_RECV).decode(FORMAT)
+            full_message += received_message
+            if len(full_message) - HEADER_RECV == message_length:
+                break
+        full_message = full_message[HEADER_RECV:]
+        logging.info(f'[RECEIVING MESSAGE] {full_message}')
+        return full_message, INV_FLAGS[_flag]
 
 
 def main():
     client = Client(IP_ADDR, PORT)
     client.connecting()
-    client.receive_id()
-    client.send_msg('Hello World!')
+    client.receive_msg()
+    client.send_msg('CONNECTED', 'CONNECTED')
     connected = True
     while connected:
-        message = client.receive_message()
-        if message == 'INIT_GLOBAL_WEIGHTS':
-            client.send_msg('Waiting for weights!')
-        if message == 'Global Weights':
+        message, flag = client.receive_msg()
+        if flag == 'GLOBAL WEIGHTS':
             # Training
-            # Send weights
-            client.send_msg('Local Weights')
-        if message == DISCONNECT_MESSAGE:
+            logging.info('[GOT GLOBAL WEIGHTS]')
+            client.send_msg('LOCAL WEIGHTS', 'LOCAL WEIGHTS')
+        if flag == DISCONNECT_MESSAGE:
             break
-    # client.send_msg('READY!')
-    # client.send_msg(DISCONNECT_MESSAGE)
 
 
 if __name__ == '__main__':
