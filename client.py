@@ -1,14 +1,15 @@
 from __init__ import log_cleansing_client, HEADER_SEND, HEADER_RECV, INV_FLAGS,\
     PORT, FORMAT, IP_ADDR, DISCONNECT_MESSAGE, FLAGS
-from utils import find_client_index
+from utils import find_client_index, create_model
 import socket
 import logging
 import pickle
 
 log_cleansing_client()
+INDEX = find_client_index()
 
-logging.basicConfig(level=logging.INFO, filename=f'client{find_client_index()}.log', filemode='w',
-                    format='%(asctime)s - %(message)s')
+logging.basicConfig(level=logging.INFO, filename=f'client{INDEX}.log', filemode='w',
+                    format='%(message)s')
 
 
 class Client:
@@ -16,37 +17,40 @@ class Client:
         self.addr = addr
         self.port = port
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_state = ''
-        self.id = ''
+        self.model = create_model('LOCAL_MODEL')
 
     def connecting(self):
         logging.info('[CONNECTING] Connecting...')
         self.client_socket.connect((self.addr, self.port))
 
-    def send_msg(self, msg, _flag):
+    def send_msg(self, _flag, _message):
         def message_formatting(_message):
             pickled_message = pickle.dumps(_message)
-            msg_bytes = bytes(''.join([FLAGS[_flag], f'{len(pickled_message):<{HEADER_SEND}}']), FORMAT) + pickled_message
+            msg_bytes = bytes(''.join([FLAGS[_flag], f'{len(pickled_message):<{HEADER_SEND}}']),
+                              FORMAT) + pickled_message
             return msg_bytes
 
-        _message = message_formatting(msg)
-        logging.info(f'[SENDING {_flag}] Sending {_flag} {msg} to client')
+        _message = message_formatting(_message)
+        logging.info(f'[SENDING {_flag}] Sending {_flag} to client')
         self.client_socket.send(_message)
 
     def receive_msg(self):
-        full_message = b''
+        l = []
         received_message = self.client_socket.recv(HEADER_RECV)
         HEADER = received_message.decode(FORMAT)
         _flag = HEADER[0]
         message_length = int(HEADER[1:])
-        full_message += received_message
+        l.append(received_message)
+        len_l = len(received_message)
         while True:
             received_message = self.client_socket.recv(HEADER_RECV)
-            full_message += received_message
-            if len(full_message) - HEADER_RECV == message_length:
+            l.append(received_message)
+            len_l += len(received_message)
+            if len_l - HEADER_RECV == message_length:
                 break
+        full_message = b''.join(l)
         full_message = pickle.loads(full_message[HEADER_RECV:])
-        logging.info(f'[RECEIVING MESSAGE] {full_message}')
+        logging.info(f'[RECEIVING MESSAGE]')
         return full_message, INV_FLAGS[_flag]
 
 
@@ -59,9 +63,11 @@ def main():
     while connected:
         message, flag = client.receive_msg()
         if flag == 'GLOBAL WEIGHTS':
-            # Training
             logging.info('[GOT GLOBAL WEIGHTS]')
-            client.send_msg('LOCAL WEIGHTS', 'LOCAL WEIGHTS')
+            client.model.set_weights(message)
+            # Train
+
+            client.send_msg('LOCAL WEIGHTS', client.model.get_weights())
         if flag == DISCONNECT_MESSAGE:
             break
 

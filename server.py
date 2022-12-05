@@ -1,5 +1,6 @@
 from __init__ import log_cleansing_server, HEADER_SEND, HEADER_RECV, PORT, FORMAT, INV_FLAGS,\
     DISCONNECT_MESSAGE, IP_ADDR, NUMBER_OF_CLIENTS, CYCLES, FLAGS
+from utils import create_model
 import socket
 import threading
 import logging
@@ -17,6 +18,11 @@ class Server:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.cycle = 0
+        self.model = create_model('Global_Model')
+        logger = logging.getLogger('server.log')
+        logging.info("[GLOBAL MODEL SUMMARY]")
+        self.model.summary(print_fn=logger.info)
+
         try:
             self.server.bind((self.addr, self.port))
 
@@ -55,19 +61,22 @@ def handle_client(conn, addr):
         c.send(_message)
 
     def receive_msg(_conn):
-        full_message = b''
+        l = []
         received_message = _conn.recv(HEADER_RECV)
         HEADER = received_message.decode(FORMAT)
         _flag = HEADER[0]
         message_length = int(HEADER[1:])
-        full_message += received_message
+        l.append(received_message)
+        len_l = len(received_message)
         while True:
             received_message = _conn.recv(HEADER_RECV)
-            full_message += received_message
-            if len(full_message) - HEADER_RECV == message_length:
+            l.append(received_message)
+            len_l += len(received_message)
+            if len_l - HEADER_RECV == message_length:
                 break
+        full_message = b''.join(l)
         full_message = pickle.loads(full_message[HEADER_RECV:])
-        logging.info(f'[RECEIVING MESSAGE] {full_message}')
+        logging.info(f'[RECEIVING MESSAGE]')
         return full_message, INV_FLAGS[_flag]
 
     send_msg(conn, 'ID', str(addr[1]))
@@ -75,13 +84,17 @@ def handle_client(conn, addr):
     message, flag = receive_msg(conn)
     while connected:
         if flag == 'CONNECTED':
-            send_msg(conn, 'GLOBAL WEIGHTS', 'GLOBAL WEIGHTS')
+            send_msg(conn, 'GLOBAL WEIGHTS', server.model.get_weights())
         if flag == 'LOCAL WEIGHTS':
             logging.info(f'[LOCAL WEIGHTS]')
             # Do some averaging
-            # message = receive_msg(conn, addr)
+            while True:
+                if len(weights) != NUMBER_OF_CLIENTS:
+                    break
+            # Averaging
+            
             if server.cycle < CYCLES - 1:
-                send_msg(conn, 'GLOBAL WEIGHTS', 'GLOBAL WEIGHTS')
+                send_msg(conn, 'GLOBAL WEIGHTS', server.model.get_weights())
                 server.cycle += 1
             else:
                 send_msg(conn, DISCONNECT_MESSAGE, DISCONNECT_MESSAGE)
@@ -95,11 +108,11 @@ def main():
     global server
     server = Server(IP_ADDR, PORT)
     server.listening()
-    connections = []
+    global weights
+    weights = []
     threads = []
     while server.verif_n_clients():
         conn, addr = server.accepting()
-        connections.append((conn, addr))
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         threads.append(thread)
     for thread in threads:
@@ -110,5 +123,5 @@ def main():
 if __name__ == '__main__':
     log_cleansing_server()
     logging.basicConfig(level=logging.INFO, filename='server.log', filemode='w',
-                        format='%(asctime)s - %(message)s')
+                        format='%(message)s')
     main()

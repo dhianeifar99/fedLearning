@@ -1,16 +1,73 @@
-2022-12-01 21:28:57,475 - [STARTING]		 server is starting...
-2022-12-01 21:28:57,475 - [LISTENING]		 server is listening on 192.168.173.194!
-2022-12-01 21:28:57,475 - [ACCEPTING CONNECTION] 1 clients left!
-2022-12-01 21:28:58,855 - [SATURATION] REACHED MAXIMUM CAPACITY!
-2022-12-01 21:28:58,856 - [SENDING ID] Sending ID to client
-2022-12-01 21:28:58,857 - [RECEIVING MESSAGE] CONNECTED
-2022-12-01 21:28:58,857 - [SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client
-2022-12-01 21:28:58,857 - [RECEIVING MESSAGE] LOCAL WEIGHTS
-2022-12-01 21:28:58,858 - [LOCAL WEIGHTS]
-2022-12-01 21:28:58,858 - [SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client
-2022-12-01 21:28:58,858 - [RECEIVING MESSAGE] LOCAL WEIGHTS
-2022-12-01 21:28:58,858 - [LOCAL WEIGHTS]
-2022-12-01 21:28:58,858 - [SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client
-2022-12-01 21:28:58,859 - [RECEIVING MESSAGE] LOCAL WEIGHTS
-2022-12-01 21:28:58,859 - [LOCAL WEIGHTS]
-2022-12-01 21:28:58,859 - [SENDING !DISCONNECT] Sending !DISCONNECT to client
+[STARTING]		 server is starting...
+[GLOBAL MODEL SUMMARY]
+Model: "Global_Model"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ Global_Model_Conv2D_1 (Conv  (None, 222, 222, 16)     448       
+ 2D)                                                             
+                                                                 
+ Global_Model_MaxPool2D_1 (M  (None, 111, 111, 16)     0         
+ axPooling2D)                                                    
+                                                                 
+ Global_Model_Conv2D_2 (Conv  (None, 109, 109, 32)     4640      
+ 2D)                                                             
+                                                                 
+ Global_Model_MaxPool2D_2 (M  (None, 54, 54, 32)       0         
+ axPooling2D)                                                    
+                                                                 
+ Global_Model_Conv2D_3 (Conv  (None, 52, 52, 64)       18496     
+ 2D)                                                             
+                                                                 
+ Global_Model_MaxPool2D_3 (M  (None, 26, 26, 64)       0         
+ axPooling2D)                                                    
+                                                                 
+ Global_Model_Conv2D_4 (Conv  (None, 24, 24, 128)      73856     
+ 2D)                                                             
+                                                                 
+ Global_Model_MaxPool2D_4 (M  (None, 12, 12, 128)      0         
+ axPooling2D)                                                    
+                                                                 
+ Global_Model_Conv2D_5 (Conv  (None, 10, 10, 256)      295168    
+ 2D)                                                             
+                                                                 
+ Global_Model_MaxPool2D_5 (M  (None, 5, 5, 256)        0         
+ axPooling2D)                                                    
+                                                                 
+ Global_Model_Conv2D_6 (Conv  (None, 3, 3, 512)        1180160   
+ 2D)                                                             
+                                                                 
+ Global_Model_MaxPool2D_6 (M  (None, 1, 1, 512)        0         
+ axPooling2D)                                                    
+                                                                 
+ Global_Model_Flatten (Flatt  (None, 512)              0         
+ en)                                                             
+                                                                 
+ Global_Model_Dense_1 (Dense  (None, 128)              65664     
+ )                                                               
+                                                                 
+ Global_Model_Dense_2 (Dense  (None, 512)              66048     
+ )                                                               
+                                                                 
+ Global_Model_Output (Dense)  (None, 4)                2052      
+                                                                 
+=================================================================
+Total params: 1,706,532
+Trainable params: 1,706,532
+Non-trainable params: 0
+_________________________________________________________________
+[LISTENING]		 server is listening on 192.168.1.223!
+[ACCEPTING CONNECTION] 1 clients left!
+[SATURATION] REACHED MAXIMUM CAPACITY!
+[SENDING ID] Sending ID to client
+[RECEIVING MESSAGE]
+[SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client
+[RECEIVING MESSAGE]
+[LOCAL WEIGHTS]
+[SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client
+[RECEIVING MESSAGE]
+[LOCAL WEIGHTS]
+[SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client
+[RECEIVING MESSAGE]
+[LOCAL WEIGHTS]
+[SENDING !DISCONNECT] Sending !DISCONNECT to client
