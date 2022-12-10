@@ -1,12 +1,16 @@
-from __init__ import log_cleansing_client, HEADER_SEND, HEADER_RECV, INV_FLAGS,\
-    PORT, FORMAT, IP_ADDR, DISCONNECT_MESSAGE, FLAGS
+from __init__ import HEADER_SEND, HEADER_RECV, INV_FLAGS,\
+    PORT, FORMAT, IP_ADDR, DISCONNECT_MESSAGE, FLAGS, CLIENT_PATH
 from utils import find_client_index, create_model
 import socket
 import logging
 import pickle
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import os
 
-log_cleansing_client()
+
 INDEX = find_client_index()
+print(INDEX)
 
 logging.basicConfig(level=logging.INFO, filename=f'client{INDEX}.log', filemode='w',
                     format='%(message)s')
@@ -18,6 +22,7 @@ class Client:
         self.port = port
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.model = create_model('LOCAL_MODEL')
+        self.model.compile(loss='categorical_crossentropy', optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), metrics=['accuracy'])
 
     def connecting(self):
         logging.info('[CONNECTING] Connecting...')
@@ -31,7 +36,7 @@ class Client:
             return msg_bytes
 
         _message = message_formatting(_message)
-        logging.info(f'[SENDING {_flag}] Sending {_flag} to client')
+        logging.info(f'[SENDING {_flag}] SENDING {_flag} TO SERVER')
         self.client_socket.send(_message)
 
     def receive_msg(self):
@@ -64,13 +69,47 @@ def main():
         message, flag = client.receive_msg()
         if flag == 'GLOBAL WEIGHTS':
             logging.info('[GOT GLOBAL WEIGHTS]')
-            client.model.set_weights(message)
-            # Train
 
-            client.send_msg('LOCAL WEIGHTS', client.model.get_weights())
+            # train
+            client.model.set_weights(message)
+            train_generator = train_datagen.flow_from_directory(
+                directory=os.path.join(CLIENT_PATH, str(INDEX), 'train'),
+                target_size=(50, 50),
+                color_mode="rgb",
+                batch_size=16,
+                class_mode="categorical",
+            )
+
+            val_generator = val_datagen.flow_from_directory(
+                directory=os.path.join(CLIENT_PATH, str(INDEX), 'val'),
+                target_size=(50, 50),
+                color_mode="rgb",
+                batch_size=16,
+                class_mode="categorical",
+            )
+
+            STEP_SIZE_TRAIN = train_generator.n // train_generator.batch_size
+            STEP_SIZE_VALID = val_generator.n // val_generator.batch_size
+            history = client.model.fit_generator(train_generator,
+                                                 steps_per_epoch=STEP_SIZE_TRAIN,
+                                                 validation_data=val_generator,
+                                                 validation_steps=STEP_SIZE_VALID,
+                                                 epochs=3)
+            weights = client.model.get_weights()
+            # pickle.dump(weights, open(f'client{INDEX}.pkl', 'wb'))
+            logging.info(history.history)
+            client.send_msg('LOCAL WEIGHTS', weights)
         if flag == DISCONNECT_MESSAGE:
             break
 
 
 if __name__ == '__main__':
+
+    train_datagen = ImageDataGenerator(
+        rescale=1. / 255,
+        shear_range=0.2,
+        zoom_range=0.2,)
+    val_datagen = ImageDataGenerator(
+        rescale=1. / 255)
+
     main()

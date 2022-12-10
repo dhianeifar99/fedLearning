@@ -4,70 +4,77 @@ Model: "Global_Model"
 _________________________________________________________________
  Layer (type)                Output Shape              Param #   
 =================================================================
- Global_Model_Conv2D_1 (Conv  (None, 222, 222, 16)     448       
+ Global_Model_Conv2D_1 (Conv  (None, 48, 48, 16)       448       
  2D)                                                             
                                                                  
- Global_Model_MaxPool2D_1 (M  (None, 111, 111, 16)     0         
+ Global_Model_MaxPool2D_1 (M  (None, 24, 24, 16)       0         
  axPooling2D)                                                    
                                                                  
- Global_Model_Conv2D_2 (Conv  (None, 109, 109, 32)     4640      
+ Global_Model_Conv2D_2 (Conv  (None, 22, 22, 32)       4640      
  2D)                                                             
                                                                  
- Global_Model_MaxPool2D_2 (M  (None, 54, 54, 32)       0         
+ Global_Model_MaxPool2D_2 (M  (None, 11, 11, 32)       0         
  axPooling2D)                                                    
                                                                  
- Global_Model_Conv2D_3 (Conv  (None, 52, 52, 64)       18496     
+ Global_Model_Conv2D_3 (Conv  (None, 9, 9, 64)         18496     
  2D)                                                             
                                                                  
- Global_Model_MaxPool2D_3 (M  (None, 26, 26, 64)       0         
+ Global_Model_MaxPool2D_3 (M  (None, 4, 4, 64)         0         
  axPooling2D)                                                    
                                                                  
- Global_Model_Conv2D_4 (Conv  (None, 24, 24, 128)      73856     
+ Global_Model_Conv2D_4 (Conv  (None, 2, 2, 128)        73856     
  2D)                                                             
                                                                  
- Global_Model_MaxPool2D_4 (M  (None, 12, 12, 128)      0         
+ Global_Model_MaxPool2D_4 (M  (None, 1, 1, 128)        0         
  axPooling2D)                                                    
                                                                  
- Global_Model_Conv2D_5 (Conv  (None, 10, 10, 256)      295168    
- 2D)                                                             
-                                                                 
- Global_Model_MaxPool2D_5 (M  (None, 5, 5, 256)        0         
- axPooling2D)                                                    
-                                                                 
- Global_Model_Conv2D_6 (Conv  (None, 3, 3, 512)        1180160   
- 2D)                                                             
-                                                                 
- Global_Model_MaxPool2D_6 (M  (None, 1, 1, 512)        0         
- axPooling2D)                                                    
-                                                                 
- Global_Model_Flatten (Flatt  (None, 512)              0         
+ Global_Model_Flatten (Flatt  (None, 128)              0         
  en)                                                             
                                                                  
- Global_Model_Dense_1 (Dense  (None, 128)              65664     
+ Global_Model_Dense_1 (Dense  (None, 128)              16512     
  )                                                               
                                                                  
  Global_Model_Dense_2 (Dense  (None, 512)              66048     
  )                                                               
                                                                  
- Global_Model_Output (Dense)  (None, 4)                2052      
+ Global_Model_Output (Dense)  (None, 3)                1539      
                                                                  
 =================================================================
-Total params: 1,706,532
-Trainable params: 1,706,532
+Total params: 181,539
+Trainable params: 181,539
 Non-trainable params: 0
 _________________________________________________________________
 [LISTENING]		 server is listening on 192.168.1.223!
+[ACCEPTING CONNECTION] 3 clients left!
+[ACCEPTING CONNECTION] 2 clients left!
 [ACCEPTING CONNECTION] 1 clients left!
 [SATURATION] REACHED MAXIMUM CAPACITY!
-[SENDING ID] Sending ID to client
-[RECEIVING MESSAGE]
-[SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client
-[RECEIVING MESSAGE]
-[LOCAL WEIGHTS]
-[SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client
-[RECEIVING MESSAGE]
-[LOCAL WEIGHTS]
-[SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client
-[RECEIVING MESSAGE]
-[LOCAL WEIGHTS]
-[SENDING !DISCONNECT] Sending !DISCONNECT to client
+[SENDING ID] Sending ID to client 49588
+[SENDING ID] Sending ID to client 49598
+[SENDING ID] Sending ID to client 52508
+[RECEIVING MESSAGE FROM CLIENT 49588]
+[RECEIVING MESSAGE FROM CLIENT 49598]
+[RECEIVING MESSAGE FROM CLIENT 52508]
+[SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client 52508
+[SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client 49588
+[SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client 49598
+[RECEIVING MESSAGE FROM CLIENT 49588]
+[LOCAL WEIGHTS FROM CLIENT 49588]
+[AVERAGING]
+[SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client 49588
+[RECEIVING MESSAGE FROM CLIENT 49598]
+[LOCAL WEIGHTS FROM CLIENT 49598]
+[AVERAGING]
+[SENDING GLOBAL WEIGHTS] Sending GLOBAL WEIGHTS to client 49598
+[RECEIVING MESSAGE FROM CLIENT 52508]
+[LOCAL WEIGHTS FROM CLIENT 52508]
+[AVERAGING]
+[SENDING !DISCONNECT] Sending !DISCONNECT to client 52508
+[RECEIVING MESSAGE FROM CLIENT 49588]
+[LOCAL WEIGHTS FROM CLIENT 49588]
+[AVERAGING]
+[SENDING !DISCONNECT] Sending !DISCONNECT to client 49588
+[RECEIVING MESSAGE FROM CLIENT 49598]
+[LOCAL WEIGHTS FROM CLIENT 49598]
+[AVERAGING]
+[SENDING !DISCONNECT] Sending !DISCONNECT to client 49598

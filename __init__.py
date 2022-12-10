@@ -1,14 +1,10 @@
 import os
 
 
-def log_cleansing_server():
+def log_cleansing():
     for file in os.listdir():
         if file[0] == 's' and file[-1] == 'g':
             os.remove(file)
-
-
-def log_cleansing_client():
-    for file in os.listdir():
         if file[0] == 'c' and file[-1] == 'g':
             os.remove(file)
 
@@ -19,7 +15,7 @@ PORT = 5050
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = '!DISCONNECT'
 IP_ADDR = '192.168.1.223'
-NUMBER_OF_CLIENTS = 1
+NUMBER_OF_CLIENTS = 3
 CYCLES = 3
 FLAGS = {
     'ID': '0',
@@ -35,3 +31,6 @@ INV_FLAGS = {
     '3': 'LOCAL WEIGHTS',
     '4': '!DISCONNECT',
 }
+
+INIT_WEIGHTS = '/home/dhianeifar/federated_learning/socket_project/init_weights.pkl'
+CLIENT_PATH = '/home/dhianeifar/federated_learning/socket_project/data1'
