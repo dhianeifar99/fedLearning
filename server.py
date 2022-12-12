@@ -1,12 +1,17 @@
 from __init__ import log_cleansing, HEADER_SEND, HEADER_RECV, PORT, FORMAT, INV_FLAGS, \
-    DISCONNECT_MESSAGE, IP_ADDR, NUMBER_OF_CLIENTS, CYCLES, FLAGS, INIT_WEIGHTS
+    DISCONNECT_MESSAGE, IP_ADDR, NUMBER_OF_CLIENTS, CYCLES, FLAGS, INIT_WEIGHTS, TEST_SERVER_PATH
 from utils import create_model
 import socket
 import threading
 import logging
-import sys
 import pickle
 import numpy as np
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1 / (NUMBER_OF_CLIENTS + 4))
+
+sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
 
 
 class Server:
@@ -19,6 +24,7 @@ class Server:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.cycle = 0
+        self.flag = ''
         self.model = create_model('Global_Model')
         with open(INIT_WEIGHTS, 'rb') as pickle_file:
             self.model.set_weights(pickle.load(pickle_file))
@@ -31,6 +37,23 @@ class Server:
 
         except socket.error as e:
             print(str(e))
+
+    def evaluation(self):
+        test_datagen = ImageDataGenerator(
+            rescale=1. / 255)
+        test_generator = test_datagen.flow_from_directory(
+            directory=TEST_SERVER_PATH,
+            target_size=(50, 50),
+            color_mode="rgb",
+            batch_size=4,
+            class_mode="categorical",
+        )
+        # Testing phase after averaging!
+        self.model.compile(loss='categorical_crossentropy', optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                           metrics=['accuracy'])
+        results = self.model.evaluate(test_generator)
+        logging.info(f'[TEST AFTER AVERAGING CYCLE {self.cycle}]')
+        logging.info(results)
 
     def listening(self):
         logging.info(f"[LISTENING]\t\t server is listening on {self.addr}!")
@@ -52,7 +75,23 @@ class Server:
         return self.server.accept()
 
 
-def handle_client(conn, addr):
+def AVERAGING():
+    if not weights:
+        return
+    else:
+        while weights:
+            if len(weights) == 3:
+                curr_weights = weights.copy()
+                weights.clear()
+                logging.info('[AVERAGING]')
+                server.model.set_weights(
+                    [np.mean(np.array([curr_weights[i][j] for i in range(len(curr_weights))]), axis=0) for j in
+                     range(len(curr_weights[0]))])
+
+
+def handle_client(conn, addr, flag):
+    PORT_ID = str(addr[1])
+
     def send_msg(c, _flag, _message):
         def message_formatting(_message):
             pickled_message = pickle.dumps(_message)
@@ -61,7 +100,7 @@ def handle_client(conn, addr):
             return msg_bytes
 
         _message = message_formatting(_message)
-        logging.info(f'[SENDING {_flag}] Sending {_flag} to client {str(addr[1])}')
+        logging.info(f'[SENDING {_flag}] Sending {_flag} to client {PORT_ID}')
         c.send(_message)
 
     def receive_msg(_conn):
@@ -80,35 +119,21 @@ def handle_client(conn, addr):
                 break
         full_message = b''.join(l)
         full_message = pickle.loads(full_message[HEADER_RECV:])
-        logging.info(f'[RECEIVING MESSAGE FROM CLIENT {str(addr[1])}]')
+        logging.info(f'[RECEIVING MESSAGE FROM CLIENT {PORT_ID}]')
         return full_message, INV_FLAGS[_flag]
 
-    send_msg(conn, 'ID', str(addr[1]))
-    connected = True
-    message, flag = receive_msg(conn)
-    while connected:
-        if flag == 'CONNECTED':
-            send_msg(conn, 'GLOBAL WEIGHTS', server.model.get_weights())
-        if flag == 'LOCAL WEIGHTS':
-            logging.info(f'[LOCAL WEIGHTS FROM CLIENT {str(addr[1])}]')
-            weights.append(message)
-            # Do some averaging
-
-            logging.info('[AVERAGING]')
-            # Averaging
-            server.model.set_weights([np.mean(np.array([weights[i][j] for i in range(len(weights))]), axis=0) for j in
-                                      range(len(weights[0]))])
-            weights.clear()
-            # Add GLOBAL MODEL results on test data to log
-            if server.cycle < CYCLES - 1:
-                send_msg(conn, 'GLOBAL WEIGHTS', server.model.get_weights())
-                server.cycle += 1
-            else:
-                send_msg(conn, DISCONNECT_MESSAGE, DISCONNECT_MESSAGE)
-                sys.exit()
+    if flag == '':
+        send_msg(conn, 'ID', PORT_ID)
         message, flag = receive_msg(conn)
-
-    conn.close()
+        server.flag = 'CONNECTED'
+    if flag == 'CONNECTED':
+        send_msg(conn, 'GLOBAL WEIGHTS', server.model.get_weights())
+        message, flag = receive_msg(conn)
+        logging.info(f'[LOCAL WEIGHTS FROM CLIENT {str(addr[1])}]')
+        weights.append(message)
+    if flag == DISCONNECT_MESSAGE:
+        send_msg(conn, DISCONNECT_MESSAGE, DISCONNECT_MESSAGE)
+        conn.close()
 
 
 def main():
@@ -122,10 +147,33 @@ def main():
     while server.verif_n_clients():
         conn, addr = server.accepting()
         connections.append((conn, addr))
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread = threading.Thread(target=handle_client, args=(conn, addr, server.flag))
         threads.append(thread)
     for thread in threads:
         thread.start()
+    for thread in threads:
+        thread.join()
+    while server.cycle <= CYCLES - 1:
+        if server.cycle == CYCLES - 1:
+            server.flag = DISCONNECT_MESSAGE
+        AVERAGING()
+        '''
+            TO DO:
+            Add testing phase (global model) after averaging the weights.
+            
+            CANT DO EVALUATION 
+            !!! OOM GPU !!!
+        '''
+        # server.evaluation()
+        threads.clear()
+        for connection in connections:
+            thread = threading.Thread(target=handle_client, args=(*connection, server.flag))
+            threads.append(thread)
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        server.cycle += 1
 
 
 if __name__ == '__main__':

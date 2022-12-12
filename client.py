@@ -1,12 +1,16 @@
-from __init__ import HEADER_SEND, HEADER_RECV, INV_FLAGS,\
-    PORT, FORMAT, IP_ADDR, DISCONNECT_MESSAGE, FLAGS, CLIENT_PATH
+from __init__ import HEADER_SEND, HEADER_RECV, INV_FLAGS, \
+    PORT, FORMAT, IP_ADDR, DISCONNECT_MESSAGE, FLAGS, CLIENT_PATH, NUMBER_OF_CLIENTS
 from utils import find_client_index, create_model
 import socket
 import logging
 import pickle
-import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import os
+import tensorflow as tf
+
+gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=1/(NUMBER_OF_CLIENTS + 5))
+
+sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
 
 
 INDEX = find_client_index()
@@ -96,7 +100,6 @@ def main():
                                                  validation_steps=STEP_SIZE_VALID,
                                                  epochs=3)
             weights = client.model.get_weights()
-            # pickle.dump(weights, open(f'client{INDEX}.pkl', 'wb'))
             logging.info(history.history)
             client.send_msg('LOCAL WEIGHTS', weights)
         if flag == DISCONNECT_MESSAGE:
